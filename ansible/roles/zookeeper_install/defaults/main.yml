@@ -1,0 +1,6 @@
+zookeeper_jdk_version: "jdk-11.0.9.1+1"
+zookeeper_version: 3.8.2
+zoo_quorum_list: []
+#   zoo1: 1
+#   zoo2: 2
+#   zoo3: 3

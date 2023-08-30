@@ -1,0 +1,22 @@
+[Unit]
+Description=ZooKeeper Service
+Documentation=http://zookeeper.apache.org
+Requires=network.target
+After=network.target
+
+[Service]
+Type=forking
+User=zookeeper
+Group=zookeeper
+SyslogIdentifier=zookeeper
+PIDFILE="/var/lib/zookeeper/zookeeper_server.pid"
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/{{ zookeeper_jdk_version }}/bin
+ExecStart=/opt/apache-zookeeper-{{ zookeeper_version }}-bin/bin/zkServer.sh start /etc/zookeeper/zoo.cfg
+ExecStop=/opt/apache-zookeeper-{{ zookeeper_version }}-bin/bin/zkServer.sh stop /etc/zookeeper/zoo.cfg
+Restart=on-failure
+TimeoutStartSec=10s
+WorkingDirectory=/var/lib/zookeeper
+# WorkingDirectory=/opt/apache-zookeeper-{{ zookeeper_version }}-bin/
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,153 @@
+
+- name: "Add the user 'zookeeper' with a bash shell"
+  user:
+    name: zookeeper
+    shell: /bin/bash
+    home: /var/lib/zookeeper
+    append: yes
+
+- name: Check JDK current version
+  stat:
+    path: "/opt/{{ zookeeper_jdk_version }}"
+  register: current_version
+
+- block:
+  - name: Download JDK
+    get_url:
+      url: "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/{{ zookeeper_jdk_version }}/OpenJDK11U-jdk_x64_linux_hotspot_11.0.9.1_1.tar.gz"
+      dest: /opt
+      mode: '0755'
+
+  - name: unarchive JDK
+    unarchive:
+      src: "/opt/OpenJDK11U-jdk_x64_linux_hotspot_11.0.9.1_1.tar.gz"
+      dest: /opt/
+      mode: '0755'
+      remote_src: yes
+
+  when: not current_version.stat.exists
+
+- name: copy JDK to /usr/lib/
+  copy:
+    src: /opt/{{ zookeeper_jdk_version }}
+    dest: /usr/lib/
+    remote_src: yes
+
+- name: set JAVA_HOME env var in /etc/profile
+  lineinfile:
+    dest: "/etc/profile"
+    state: present
+    line: export JAVA_HOME=/usr/lib/{{ zookeeper_jdk_version }}
+
+- name: add line 'export PATH=$PATH:/usr/lib/{{ zookeeper_jdk_version }}/bin' to /etc/profile
+  lineinfile:
+    path: /etc/profile
+    line: export PATH=$PATH:/usr/lib/{{ zookeeper_jdk_version }}/bin
+
+- name: set JAVA_HOME env var in /var/lib/zookeeper/.bashrc
+  lineinfile:
+    dest: "/var/lib/zookeeper/.bashrc"
+    state: present
+    line: export JAVA_HOME="/usr/lib/{{ zookeeper_jdk_version }}/bin"
+    owner: zookeeper
+    group: zookeeper
+
+- name: add line 'export PATH=$PATH:/usr/lib/{{ zookeeper_jdk_version }}/bin' to /var/lib/zookeeper/.bashrc
+  lineinfile:
+    path: /var/lib/zookeeper/.bashrc
+    line: export PATH=$PATH:/usr/lib/{{ zookeeper_jdk_version }}/bin
+    owner: zookeeper
+    group: zookeeper
+
+- name: Check zookeeper current version
+  stat:
+    path: "/opt/apache-zookeeper-{{ zookeeper_version }}-bin"
+  register: current_version
+
+- block:
+  - name: Download zookeeper
+    get_url:
+      url: "https://apache-mirror.rbc.ru/pub/apache/zookeeper/zookeeper-{{ zookeeper_version }}/apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz"
+      dest: /opt
+      mode: '0755'
+      owner: zookeeper
+      group: zookeeper
+
+  - name: unarchive zookeeper
+    unarchive:
+      src: "/opt/apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz"
+      dest: /opt/
+      mode: '0755'
+      owner: zookeeper
+      group: zookeeper
+      remote_src: yes
+      # extra_opts:
+      #   - -xf
+
+  - name: Recursively change ownership of a directory
+    file:
+      path: /opt/apache-zookeeper-{{ zookeeper_version }}-bin
+      state: directory
+      recurse: yes
+      owner: zookeeper
+      group: zookeeper
+
+  when: not current_version.stat.exists
+
+- name: create config folder /etc/zookeeper
+  file:
+    path: /etc/zookeeper
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+    mode: 0750
+
+- name: copy default config file to /etc/zookeeper/zoo.cfg
+  template:
+    src: zoo.cfg.j2
+    dest: /etc/zookeeper/zoo.cfg
+    mode: '0644'
+    owner: zookeeper
+    group: zookeeper
+
+- block:
+  - name: add servers to config for quorum
+    lineinfile:
+      path: /etc/zookeeper/zoo.cfg
+      line: "server.{{ hostvars[inventory_hostname].zoo_quorum_list[item]}}={{ item }}:2888:3888"
+      insertafter: EOF
+      owner: zookeeper
+      group: zookeeper
+    loop: "{{ hostvars[inventory_hostname].zoo_quorum_list | list}}"
+
+  - name: create file myid in /var/lib/zookeeper/myid
+    file:
+      path: /var/lib/zookeeper/myid
+      state: touch
+      owner: zookeeper
+      group: zookeeper
+      mode: 0640
+
+  - name: wright myid in /var/lib/zookeeper/myid
+    shell: "echo {{ hostvars[inventory_hostname].zoo_quorum_list[inventory_hostname] }} > /var/lib/zookeeper/myid"
+
+  when: hostvars[inventory_hostname].zoo_quorum_list
+
+- name: copy systemd file to /lib/systemd/system/zookeeper.service
+  template:
+    src: zookeeper.service.j2
+    dest: "/lib/systemd/system/zookeeper.service"
+    owner: zookeeper
+    group: zookeeper 
+    mode: 0644 
+  tags:
+    - systemd
+
+- name: "restart service zookeeper"
+  systemd:
+    state: restarted 
+    daemon_reexec: yes 
+    enabled: yes
+    name: zookeeper
+  tags:
+    - systemd
