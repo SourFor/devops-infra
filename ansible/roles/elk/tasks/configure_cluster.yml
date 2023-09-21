@@ -1,0 +1,45 @@
+- name: Start Elasticsearch containers
+  command: >
+    podman run -d --name elasticsearch{{ inventory_hostname }} --network es_network -p 920{{ inventory_hostname }}:9200 -p 930{{ inventory_hostname }}:9300 -e "discovery.type=single-node" -v /opt/elasticsearch_cluster:/usr/share/elasticsearch/data 
+    docker.elastic.co/elasticsearch/elasticsearch:7.15.0
+
+- name: Configure Elasticsearch systemd service
+  template:
+    src: elasticsearch.service.j2
+    dest: /etc/systemd/system/elasticsearch{{ inventory_hostname }}.service
+  notify: Restart Elasticsearch
+
+- name: Start and enable Elasticsearch systemd service
+  systemd:
+    name: elasticsearch{{ inventory_hostname }}
+    state: started
+    enabled: yes
+
+# - name: Enable firewall rules for Elasticsearch ports
+#   firewalld:
+#     service: "{{ item }}"
+#     permanent: true
+#     state: enabled
+#   loop:
+#     - http
+#     - https
+
+# - name: Reload firewalld service
+#   service:
+#     name: firewalld
+#     state: reloaded
+
+- name: Wait for Elasticsearch to start
+  uri:
+    url: http://localhost:920{{ inventory_hostname }}
+    return_content: yes
+  register: elasticsearch_response
+  until: elasticsearch_response.status == 200
+  retries: 10
+  delay: 10
+
+- name: Copy Elasticsearch index template
+  copy:
+    src: index_template.json
+    dest: /opt/elasticsearch_cluster
+

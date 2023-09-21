@@ -1,0 +1,48 @@
+- name: Configure Kibana
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    regexp: '^#?elasticsearch.username: .*'
+    line: 'elasticsearch.username: "elastic"'
+    backrefs: yes
+  become: true
+
+- name: Set Kibana Elasticsearch password
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    regexp: '^#?elasticsearch.password: .*'
+    line: 'elasticsearch.password: "{{ elasticsearch_password }}"'
+    backrefs: yes
+  become: true
+
+- name: Restart Kibana Docker container
+  ansible.builtin.command: "docker restart kibana"
+  become: true
+
+- name: Wait for Kibana to restart
+  uri:
+    url: http://localhost:5601/
+    method: GET
+    status_code: 200
+    timeout: 5
+    return_content: yes
+  register: kibana_response
+  until: kibana_response.status == 200
+  retries: 10
+  delay: 5
+  become: true
+
+- name: Configure Kibana indices
+  uri:
+    url: http://localhost:5601/api/saved_objects/index-pattern/{{ elasticsearch_index_pattern }}
+    method: POST
+    headers:
+      kbn-xsrf: "xxx"
+    body_format: json
+    body: |
+      {
+        "attributes": {
+          "title": "{{ elasticsearch_index_pattern }}",
+          "timeFieldName": "timestamp"
+        }
+      }
+  become: true

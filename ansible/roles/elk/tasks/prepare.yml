@@ -1,0 +1,24 @@
+---
+- name: Install required packages
+  ansible.builtin.package:
+    name:
+      - podman
+    state: present
+  become: true
+
+- name: Create Elasticsearch cluster directory
+  file:
+    path: "{{ elasticsearch_data_dir }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+
+- name: Copy Elasticsearch configuration template
+  template:
+    src: elasticsearch.yml.j2
+    dest: /opt/elasticsearch_cluster/elasticsearch.yml
+
+- name: Create Elasticsearch network
+  command: podman network create es_network
+

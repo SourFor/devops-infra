@@ -1,0 +1,7 @@
+---
+# handlers file for elk
+- name: Restart Elasticsearch
+  ansible.builtin.systemd:
+    name: elasticsearch
+    state: restarted
+  become: true

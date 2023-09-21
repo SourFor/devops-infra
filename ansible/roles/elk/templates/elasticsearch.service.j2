@@ -1,0 +1,23 @@
+[Unit]
+Description=Elasticsearch
+Documentation=https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=elasticsearch
+Group=elasticsearch
+Environment=ES_HOME=/opt/elasticsearch_cluster
+Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ExecStart=/bin/bash -c "{{ ES_HOME }}/bin/elasticsearch"
+Restart=always
+RestartSec=10s
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=elasticsearch
+LimitNOFILE=65536
+TimeoutStopSec=5min
+
+[Install]
+WantedBy=multi-user.target

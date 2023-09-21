@@ -1,0 +1,8 @@
+---
+# Define default variables file for elk
+elasticsearch_version: "8.9.1"
+elasticsearch_cluster_name: "mchd-cluster"
+elasticsearch_port: 9200
+elasticsearch_data_dir: "/var/lib/elasticsearch"
+kibana_version: "8.9.1"
+kibana_port: 5601
