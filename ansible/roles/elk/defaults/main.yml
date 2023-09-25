@@ -1,8 +1,13 @@
 ---
 # Define default variables file for elk
-elasticsearch_version: "8.9.1"
+elk_network: "elk_network"
 elasticsearch_cluster_name: "mchd-cluster"
-elasticsearch_port: 9200
-elasticsearch_data_dir: "/var/lib/elasticsearch"
+elasticsearch_client_port: 9200
+elasticsearch_node_port: 9300
+elasticsearch_data_dir: "/var/lib/elasticsearch/data"
+elasticsearch_config_dir: "/var/lib/elasticsearch/config"
+elasticsearch_version: "8.9.1"
+elasticsearch_image: "docker.io/elastic/elasticsearch:{{ elasticsearch_version }}"
 kibana_version: "8.9.1"
+kibana_image: "docker.io/elastic/kibana:{{ kibana_version }}"
 kibana_port: 5601

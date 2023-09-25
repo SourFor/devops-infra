@@ -2,6 +2,7 @@
 - include: prepare.yml
   tags: prepare
 - include: configure_cluster.yml
+  tags: configure_cluster
 - include: enroll_kibana.yml
 - include: set_password.yml
 - include: configure_kibana.yml

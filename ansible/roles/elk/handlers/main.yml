@@ -1,7 +1,12 @@
 ---
 # handlers file for elk
+
+- name: Just force systemd to reread configs
+  ansible.builtin.command: systemctl daemon-reload
+  become: true
+
 - name: Restart Elasticsearch
   ansible.builtin.systemd:
-    name: elasticsearch
+    name: "elasticsearch-{{ elasticsearch_cluster_name }}.service"
     state: restarted
   become: true

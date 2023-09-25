@@ -6,19 +6,38 @@
     state: present
   become: true
 
+- name: Add the user 'elasticsearch'
+  ansible.builtin.user:
+    name: elasticsearch
+    comment: elasticsearch
+    # create_home: false
+
 - name: Create Elasticsearch cluster directory
-  file:
-    path: "{{ elasticsearch_data_dir }}"
+  ansible.builtin.file:
+    path: "{{ item }}"
     state: directory
     owner: elasticsearch
     group: elasticsearch
-    mode: '0755'
+    mode: '0775'
+  loop:
+    - "{{ elasticsearch_data_dir }}"
+    - "{{ elasticsearch_config_dir }}"
 
-- name: Copy Elasticsearch configuration template
-  template:
-    src: elasticsearch.yml.j2
-    dest: /opt/elasticsearch_cluster/elasticsearch.yml
+# TO DO: To permanently change the value for the vm.max_map_count setting, update the value in /etc/sysctl.conf.
+- name: sysctl -w vm.max_map_count=262144
+  ansible.builtin.command: sysctl -w vm.max_map_count=262144
 
 - name: Create Elasticsearch network
-  command: podman network create es_network
+  ansible.builtin.command: "podman network create {{ elk_network }}"
+  # become: true
+  # become_user: elasticsearch
+  ignore_errors: true
 
+# /etc/cni/net.d/elk_network.conflist
+- name: Set version of cni = 0.4.0
+  ansible.builtin.lineinfile:
+    path: "/etc/cni/net.d/{{ elk_network }}.conflist"
+    # path: "/home/elasticsearch/.config/cni/net.d/{{ elk_network }}.conflist"
+    regexp: '"cniVersion": "1.0.0"'
+    line: |
+        "cniVersion": "0.4.0",

@@ -5,18 +5,24 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=simple
-User=elasticsearch
-Group=elasticsearch
-Environment=ES_HOME=/opt/elasticsearch_cluster
-Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ExecStart=/bin/bash -c "{{ ES_HOME }}/bin/elasticsearch"
-Restart=always
+Environment=PODMAN_SYSTEMD_UNIT=%n
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin 
+Restart=on-failure
+Type=forking
+# User=elasticsearch
+# Group=elasticsearch
+WorkingDirectory=/home/elasticsearch
+# Environment=ES_HOME=/opt/elasticsearch_cluster
+# Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ExecStart=/usr/bin/podman start elasticsearch-{{ elasticsearch_cluster_name }}
+ExecStop=/usr/bin/podman stop elasticsearch-{{ elasticsearch_cluster_name }}
+PIDFile=/tmp/podman-run-elasticsearch/containers/overlay-containers/elasticsearch-{{ elasticsearch_cluster_name }}/userdata/conmon.pid
 RestartSec=10s
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=elasticsearch
 LimitNOFILE=65536
+OOMScoreAdjust=200
 TimeoutStopSec=5min
 
 [Install]

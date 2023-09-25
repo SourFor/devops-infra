@@ -1,17 +1,75 @@
+- name: Copy Elasticsearch configuration template
+  template:
+    src: elasticsearch.yml.j2
+    dest: "{{ elasticsearch_config_dir }}/elasticsearch.yml"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0640'
+
+
+- name: "Copy config file {{ item }}"
+  ansible.builtin.copy:
+    src: "files/elasticsearch/configs/{{ item }}"
+    dest: "{{ elasticsearch_config_dir }}/{{ item }}"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0664'
+  loop:
+    - jvm.options
+    - log4j2.file.properties
+    - log4j2.properties
+    - role_mapping.yml
+    - roles.yml
+    - users
+    - users_roles
+
+- name: Stop Elasticsearch containers
+  ansible.builtin.command: podman rm -f elasticsearch-{{ elasticsearch_cluster_name }}
+  ignore_errors: true
+  become: true
+  become_user: elasticsearch
+
+# podman run -d -ti --name elasticsearch-mchd-cluster --network elk_network -p 9200:9200 -p 9300:9300 -v /var/lib/elasticsearch/data:/usr/share/elasticsearch/data -v /var/lib/elasticsearch/config:/usr/share/elasticsearch/configs docker.io/elastic/elasticsearch:8.9.1
+# podman run -d -ti --name elasticsearch-mchd-cluster --network elk_network -p 9200:9200 -p 9300:9300 -v /var/lib/elasticsearch/data:/usr/share/elasticsearch/data:Z -v /var/lib/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml docker.io/elastic/elasticsearch:8.9.1
 - name: Start Elasticsearch containers
   command: >
-    podman run -d --name elasticsearch{{ inventory_hostname }} --network es_network -p 920{{ inventory_hostname }}:9200 -p 930{{ inventory_hostname }}:9300 -e "discovery.type=single-node" -v /opt/elasticsearch_cluster:/usr/share/elasticsearch/data 
-    docker.elastic.co/elasticsearch/elasticsearch:7.15.0
+    podman create -ti --name elasticsearch-{{ elasticsearch_cluster_name }} --network {{ elk_network }} -p {{ elasticsearch_client_port }}:9200 -p {{ elasticsearch_node_port }}:9300 
+    -v {{ elasticsearch_data_dir }}:/usr/share/elasticsearch/data:Z 
+    -v {{ elasticsearch_config_dir }}/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro 
+    {{ elasticsearch_image }}
+  become: true
+  become_user: elasticsearch
+  
+- name: Generate the systemd unit file
+  ansible.builtin.command: podman generate systemd --new --files --name elasticsearch-{{ elasticsearch_cluster_name }}
+  ignore_errors: true
+  args:
+    chdir: /home/elasticsearch
+  become: true
+  become_user: elasticsearch
+
+# - name: Configure Elasticsearch systemd service
+#   template:
+#     src: elasticsearch.service.j2
+#     dest: "/usr/lib/systemd/system/elasticsearch-{{ elasticsearch_cluster_name }}.service"
+#   notify: Just force systemd to reread configs
 
 - name: Configure Elasticsearch systemd service
-  template:
-    src: elasticsearch.service.j2
-    dest: /etc/systemd/system/elasticsearch{{ inventory_hostname }}.service
-  notify: Restart Elasticsearch
+  copy:
+    src: "/home/elasticsearch/container-elasticsearch-{{ elasticsearch_cluster_name }}.service"
+    dest: "/usr/lib/systemd/system/elasticsearch-{{ elasticsearch_cluster_name }}.service"
+    remote_src: true
+    owner: elasticsearch
+    group: elasticsearch
+
+
+- name: Just force systemd to reread configs
+  ansible.builtin.command: systemctl daemon-reload
+  become: true
 
 - name: Start and enable Elasticsearch systemd service
   systemd:
-    name: elasticsearch{{ inventory_hostname }}
+    name: elasticsearch-{{ elasticsearch_cluster_name }}.service
     state: started
     enabled: yes
 
@@ -31,15 +89,15 @@
 
 - name: Wait for Elasticsearch to start
   uri:
-    url: http://localhost:920{{ inventory_hostname }}
+    url: http://localhost:9200
     return_content: yes
   register: elasticsearch_response
   until: elasticsearch_response.status == 200
   retries: 10
   delay: 10
 
-- name: Copy Elasticsearch index template
-  copy:
-    src: index_template.json
-    dest: /opt/elasticsearch_cluster
+# - name: Copy Elasticsearch index template
+#   copy:
+#     src: index_template.json
+#     dest: /opt/elasticsearch_cluster
 
