@@ -4,7 +4,7 @@
     dest: "{{ elasticsearch_config_dir }}/elasticsearch.yml"
     owner: elasticsearch
     group: elasticsearch
-    mode: '0640'
+    mode: '0644'
 
 
 - name: "Copy config file {{ item }}"

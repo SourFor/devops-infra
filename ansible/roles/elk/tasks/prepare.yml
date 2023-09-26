@@ -18,7 +18,7 @@
     state: directory
     owner: elasticsearch
     group: elasticsearch
-    mode: '0775'
+    mode: '0777'
   loop:
     - "{{ elasticsearch_data_dir }}"
     - "{{ elasticsearch_config_dir }}"
@@ -29,8 +29,8 @@
 
 - name: Create Elasticsearch network
   ansible.builtin.command: "podman network create {{ elk_network }}"
-  # become: true
-  # become_user: elasticsearch
+  become: true
+  become_user: elasticsearch
   ignore_errors: true
 
 # /etc/cni/net.d/elk_network.conflist
