@@ -23,15 +23,9 @@
     - users
     - users_roles
 
-- name: Stop Elasticsearch containers
-  ansible.builtin.command: podman rm -f elasticsearch-{{ elasticsearch_cluster_name }}
-  ignore_errors: true
-  become: true
-  become_user: elasticsearch
-
 # podman run -d -ti --name elasticsearch-mchd-cluster --network elk_network -p 9200:9200 -p 9300:9300 -v /var/lib/elasticsearch/data:/usr/share/elasticsearch/data -v /var/lib/elasticsearch/config:/usr/share/elasticsearch/configs docker.io/elastic/elasticsearch:8.9.1
 # podman run -d -ti --name elasticsearch-mchd-cluster --network elk_network -p 9200:9200 -p 9300:9300 -v /var/lib/elasticsearch/data:/usr/share/elasticsearch/data:Z -v /var/lib/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml docker.io/elastic/elasticsearch:8.9.1
-- name: Start Elasticsearch containers
+- name: Create template Elasticsearch containers
   command: >
     podman create -ti --name elasticsearch-{{ elasticsearch_cluster_name }} --network {{ elk_network }} -p {{ elasticsearch_client_port }}:9200 -p {{ elasticsearch_node_port }}:9300 
     -v {{ elasticsearch_data_dir }}:/usr/share/elasticsearch/data:Z 
@@ -46,6 +40,17 @@
   args:
     chdir: /home/elasticsearch
   become: true
+  become_user: elasticsearch
+
+- name: Delete template Elasticsearch containers
+  ansible.builtin.command: podman rm -f elasticsearch-{{ elasticsearch_cluster_name }}
+  ignore_errors: true
+  become: true
+  become_user: elasticsearch
+
+- name: Delete template Elasticsearch network
+  ansible.builtin.command: "podman network rm {{ elk_network }}"
+  ignore_errors: true
   become_user: elasticsearch
 
 # - name: Configure Elasticsearch systemd service

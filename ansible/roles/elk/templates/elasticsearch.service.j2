@@ -1,29 +1,25 @@
 [Unit]
-Description=Elasticsearch
-Documentation=https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
+Description=Podman container-elasticsearch-test-cluster.service
+Documentation=man:podman-generate-systemd(1)
 Wants=network-online.target
 After=network-online.target
+RequiresMountsFor=%t/containers
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
-Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin 
 Restart=on-failure
-Type=forking
-# User=elasticsearch
-# Group=elasticsearch
-WorkingDirectory=/home/elasticsearch
-# Environment=ES_HOME=/opt/elasticsearch_cluster
-# Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ExecStart=/usr/bin/podman start elasticsearch-{{ elasticsearch_cluster_name }}
-ExecStop=/usr/bin/podman stop elasticsearch-{{ elasticsearch_cluster_name }}
-PIDFile=/tmp/podman-run-elasticsearch/containers/overlay-containers/elasticsearch-{{ elasticsearch_cluster_name }}/userdata/conmon.pid
-RestartSec=10s
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=elasticsearch
-LimitNOFILE=65536
-OOMScoreAdjust=200
-TimeoutStopSec=5min
+TimeoutStopSec=120
+ExecStartPre=/bin/rm -f %t/%n.ctr-id
+ExecStart=/usr/bin/podman run --cidfile=%t/%n.ctr-id --cgroups=no-conmon --rm --sdnotify=conmon -d --replace -ti \ 
+    --name elasticsearch-{{ elasticsearch_cluster_name }} \ 
+    --network {{ elk_network }} -p {{ elasticsearch_client_port }}:9200 -p {{ elasticsearch_node_port }}:9300 \ 
+    -v {{ elasticsearch_data_dir }}:/usr/share/elasticsearch/data:Z \ 
+    -v {{ elasticsearch_config_dir }}/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro \ 
+    {{ elasticsearch_image }}
+ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
+ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
+Type=notify
+NotifyAccess=all
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

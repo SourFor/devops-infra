@@ -27,17 +27,44 @@
 - name: sysctl -w vm.max_map_count=262144
   ansible.builtin.command: sysctl -w vm.max_map_count=262144
 
-- name: Create Elasticsearch network
+- name: Create template Elasticsearch network
   ansible.builtin.command: "podman network create {{ elk_network }}"
-  become: true
   become_user: elasticsearch
   ignore_errors: true
+  register: network_out
 
 # /etc/cni/net.d/elk_network.conflist
 - name: Set version of cni = 0.4.0
   ansible.builtin.lineinfile:
-    path: "/etc/cni/net.d/{{ elk_network }}.conflist"
-    # path: "/home/elasticsearch/.config/cni/net.d/{{ elk_network }}.conflist"
+    path: "{{ network_out.stdout }}"
     regexp: '"cniVersion": "1.0.0"'
     line: |
         "cniVersion": "0.4.0",
+    backrefs: true
+  when: network_out.stdout
+  become_user: elasticsearch
+
+- name: Create Elasticsearch network
+  ansible.builtin.command: "podman network create {{ elk_network }}"
+  ignore_errors: true
+  register: network_out
+
+# /etc/cni/net.d/elk_network.conflist
+- name: Set version of cni = 0.4.0
+  ansible.builtin.lineinfile:
+    path: "{{ network_out.stdout }}"
+    regexp: '"cniVersion": "1.0.0"'
+    line: |
+        "cniVersion": "0.4.0",
+    backrefs: true
+  when: network_out.stdout
+
+- name: Login to private image repository
+  ansible.builtin.command: "podman login -u {{ image_repo_login }} -p {{ image_repo_pass }} {{ image_repo }}"
+  when: image_repo_login
+  no_log: true
+
+
+- name: Pulling image
+  ansible.builtin.command: "podman pull {{ elasticsearch_image }}"
+  # no_log: true

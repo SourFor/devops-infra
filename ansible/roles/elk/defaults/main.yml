@@ -1,13 +1,16 @@
 ---
 # Define default variables file for elk
-elk_network: "elk_network"
-elasticsearch_cluster_name: "mchd-cluster"
+elk_network: "test_network"
+elasticsearch_cluster_name: "test-cluster"
 elasticsearch_client_port: 9200
 elasticsearch_node_port: 9300
 elasticsearch_data_dir: "/var/lib/elasticsearch/data"
 elasticsearch_config_dir: "/var/lib/elasticsearch/config"
+image_repo: "docker.io"
+image_repo_login: "" # save it in the vault file
+image_repo_pass: "" # save it in the vault file
 elasticsearch_version: "8.9.1"
-elasticsearch_image: "docker.io/elastic/elasticsearch:{{ elasticsearch_version }}"
+elasticsearch_image: "{{ image_repo }}/elastic/elasticsearch:{{ elasticsearch_version }}"
 kibana_version: "8.9.1"
-kibana_image: "docker.io/elastic/kibana:{{ kibana_version }}"
+kibana_image: "{{ image_repo }}/elastic/kibana:{{ kibana_version }}"
 kibana_port: 5601
