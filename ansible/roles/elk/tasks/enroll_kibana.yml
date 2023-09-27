@@ -1,20 +1,25 @@
 ---
-- name: Pull Kibana Docker image
-  ansible.builtin.command: podman pull docker.elastic.co/kibana/kibana:{{ kibana_version }}
-  become: true
+- name: Pull Kibana image
+  ansible.builtin.command: podman pull {{ kibana_image }}
 
 - name: Create Kibana directory
   file:
     path: /etc/kibana
     state: directory
-  become: true
 
 - name: Copy Kibana config file
   copy:
-    src: kibana.yml
+    src: files/kibana/kibana.yml
     dest: /etc/kibana/kibana.yml
-  become: true
 
-- name: Start Kibana Docker container
-  ansible.builtin.command: podman run -d --name kibana --network host -v /etc/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro docker.elastic.co/kibana/kibana:{{ kibana_version }}
-  become: true
+- name: Copy Kibana config file
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+
+- name: Start Kibana container
+  ansible.builtin.command: podman rm -f kibana
+  ignore_errors: true
+
+- name: Start Kibana container
+  ansible.builtin.command: podman run -d -ti --name kibana --network {{ elk_network }} -p {{ kibana_port }}:5601 -v /etc/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro {{ kibana_image }}

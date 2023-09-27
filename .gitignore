@@ -3,10 +3,8 @@
 */inventories/**/hosts
 public_keys/**
 critical_vault
-vault.pass
-help*
+*.pass
 Docker
 experiment*
 script*
 python
-finnats

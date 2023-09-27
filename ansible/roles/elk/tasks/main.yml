@@ -4,5 +4,6 @@
 - include: configure_cluster.yml
   tags: configure_cluster
 - include: enroll_kibana.yml
+  tags: enroll_kibana
 - include: set_password.yml
 - include: configure_kibana.yml
