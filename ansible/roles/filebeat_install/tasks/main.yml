@@ -99,8 +99,8 @@
       --network {{ elk_network }} \ 
       --volume="/etc/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
       --volume="/etc/filebeat/pg_fields.yml:/usr/share/filebeat/pg_fields.yml:ro" \
-      -v "/etc/filebeat/modules.d/postgresql.yml:/usr/share/filebeat/modules.d/postgresql.yml" \
-      --volume="/var/log/postgresql:/var/log/postgresql:Z" \
+      --volume="/etc/filebeat/modules.d/postgresql.yml:/usr/share/filebeat/modules.d/postgresql.yml:ro" \
+      --volume="/var/log/postgresql:/var/log/postgresql:ro" \
       {{ filebeat_image }}
 
   when: filebeat
