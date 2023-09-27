@@ -7,19 +7,20 @@
     path: /etc/kibana
     state: directory
 
-- name: Copy Kibana config file
-  copy:
-    src: files/kibana/kibana.yml
-    dest: /etc/kibana/kibana.yml
+# - name: Copy Kibana config file
+#   copy:
+#     src: files/kibana/kibana.yml
+#     dest: /etc/kibana/kibana.yml
 
 - name: Copy Kibana config file
   template:
     src: kibana.yml.j2
     dest: /etc/kibana/kibana.yml
+    mode: 0764
 
-- name: Start Kibana container
+- name: Stop Kibana container
   ansible.builtin.command: podman rm -f kibana
   ignore_errors: true
 
 - name: Start Kibana container
-  ansible.builtin.command: podman run -d -ti --name kibana --network {{ elk_network }} -p {{ kibana_port }}:5601 -v /etc/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro {{ kibana_image }}
+  ansible.builtin.command: podman run -d -ti --name kibana --network {{ elk_network }} -p {{ kibana_port }}:5601 -v /etc/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml {{ kibana_image }}

@@ -1,0 +1,19 @@
+---
+# Define default variables file for filebeat
+elk_network: "test_network"
+elasticsearch_cluster_name: "test-cluster"
+elasticsearch_client_port: 9200
+elasticsearch_node_port: 9300
+elasticsearch_data_dir: "/var/lib/elasticsearch/data"
+elasticsearch_config_dir: "/var/lib/elasticsearch/config"
+image_repo: "docker.io"
+image_repo_login: "" # save it in the vault file
+image_repo_pass: "" # save it in the vault file
+elasticsearch_version: "8.9.1"
+elasticsearch_image: "{{ image_repo }}/elastic/elasticsearch:{{ elasticsearch_version }}"
+filebeat_version: "8.9.1"
+filebeat_image: "{{ image_repo }}/elastic/filebeat:{{ filebeat_version }}"
+kibana_port: 5601
+filebeat_data_dir: "/var/lib/elasticsearch/data"
+filebeat_config_dir: "/var/lib/elasticsearch/config"
+filebeat: false

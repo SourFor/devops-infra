@@ -1,0 +1,106 @@
+
+- block:
+  # - name: "delete filebeat"
+  #   apt:
+  #     name: "filebeat"
+  #     state: absent
+
+  # - name: "adding a source line to /etc/apt/sources.list.d/elastic-7.x.list" 
+  #   lineinfile:
+  #     path: "/etc/apt/sources.list.d/elastic-7.x.list"
+  #     line: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+  #     insertbefore: "BOF"
+  #     create: "yes"
+
+  # - name: "Install the package apt-transport-https"
+  #   apt:
+  #     name: "apt-transport-https"
+  #     allow_unauthenticated: "yes"
+  #     install_recommends: "yes"
+
+  # - name: "Singing key" 
+  #   shell: 'wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -'
+
+  # - name: "apt-get update"
+  #   apt:
+  #     update_cache: "yes" 
+  #   ignore_errors: "yes"
+
+  # - name: "Install the package filebeat"
+  #   apt:
+  #     name: "filebeat={{ filebeat_version }}"
+  #     allow_unauthenticated: "yes"
+  #     install_recommends: "yes"
+  #   ignore_errors: "yes"
+
+  # - name: "copy file fields.yml to /etc/filebeat/" 
+  #   copy:
+  #     src: "fields.yml"
+  #     dest: "/etc/filebeat/fields.yml" 
+  #     owner: "root" 
+  #     group: "root" 
+  #     mode: 0640 
+  - name: Create a directory /etc/filebeat
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: '0755'
+    loop:
+      - /etc/filebeat
+      - /etc/filebeat/modules.d
+
+  - name: "copy file filebeat.yml to /etc/filebeat/" 
+    copy:
+      src: "filebeat.yml"
+      dest: "/etc/filebeat/filebeat.yml" 
+      mode: 0640 
+    tags:
+      - config
+
+  - name: copy file pg_fields.yml to /etc/filebeat/ 
+    copy:
+      src: "pg_fields.yml"
+      dest: "/etc/filebeat/pg_fields.yml" 
+      mode: 0640 
+    tags:
+      - config
+
+  - name: "copy file postgresql.yml to /etc/filebeat/modules.d/" 
+    file:
+      path: "/etc/filebeat/modules.d/postgresql.yml.disabled"
+      state: absent
+
+  - name: "copy file postgresql.yml to /etc/filebeat/modules.d/" 
+    copy:
+      src: "postgresql.yml"
+      dest: "/etc/filebeat/modules.d/postgresql.yml"
+      mode: 0640 
+
+  # - name: "Configure Filebeat to start automatically during boot" 
+  #   shell: 'update-rc.d filebeat defaults 95 10'
+
+  # - name: "restart service filebeat"
+  #   systemd:
+  #     name: "filebeat"
+  #     daemon_reexec: yes 
+  #     enabled: yes
+  #     state: restarted 
+  #   tags:
+  #     - config
+  - name: Stop filebeat container
+    ansible.builtin.command: podman rm -f filebeat
+    ignore_errors: true
+
+  - name: Start filebeat container
+    ansible.builtin.command: podman run -d -ti \
+      --privileged \
+      -u root \
+      --name=filebeat \
+      --network {{ elk_network }} \ 
+      --volume="/etc/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
+      --volume="/etc/filebeat/pg_fields.yml:/usr/share/filebeat/pg_fields.yml:ro" \
+      -v "/etc/filebeat/modules.d/postgresql.yml:/usr/share/filebeat/modules.d/postgresql.yml" \
+      --volume="/var/log/postgresql:/var/log/postgresql:Z" \
+      {{ filebeat_image }}
+
+  when: filebeat
