@@ -51,7 +51,7 @@
 
   - name: "copy file filebeat.yml to /etc/filebeat/" 
     copy:
-      src: "filebeat.yml"
+      src: "filebeat/filebeat.yml"
       dest: "/etc/filebeat/filebeat.yml" 
       mode: 0640 
     tags:
@@ -59,7 +59,7 @@
 
   - name: copy file pg_fields.yml to /etc/filebeat/ 
     copy:
-      src: "pg_fields.yml"
+      src: "filebeat/pg_fields.yml"
       dest: "/etc/filebeat/pg_fields.yml" 
       mode: 0640 
     tags:
@@ -72,7 +72,7 @@
 
   - name: "copy file postgresql.yml to /etc/filebeat/modules.d/" 
     copy:
-      src: "postgresql.yml"
+      src: "filebeat/postgresql.yml"
       dest: "/etc/filebeat/modules.d/postgresql.yml"
       mode: 0640 
 
@@ -95,7 +95,7 @@
     ansible.builtin.command: podman run -d -ti \
       --privileged \
       -u root \
-      --hostname {{ ansible_host }} \
+      --hostname {{ ansible_hostname }} \
       --name=filebeat \
       --network {{ elk_network }} \ 
       --volume="/etc/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \

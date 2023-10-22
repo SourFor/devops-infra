@@ -22,42 +22,57 @@
   loop:
     - "{{ elasticsearch_data_dir }}"
     - "{{ elasticsearch_config_dir }}"
+    - "{{ elasticsearch_config_dir }}/certs"
 
 # TO DO: To permanently change the value for the vm.max_map_count setting, update the value in /etc/sysctl.conf.
-- name: sysctl -w vm.max_map_count=262144
-  ansible.builtin.command: sysctl -w vm.max_map_count=262144
+- name: Install required packages
+  ansible.builtin.file:
+    path: "/etc/sysctl.d/{{ sysctl_file }}"
+    state: touch
+  become: true
 
-- name: Create template Elasticsearch network
-  ansible.builtin.command: "podman network create {{ elk_network }}"
+- name: "add vm.max_map_count={{ vm_max_map_count }} to /etc/sysctl.d/{{ sysctl_file }}"
+  ansible.builtin.lineinfile:
+    path: "/etc/sysctl.d/{{ sysctl_file }}"
+    line: vm.max_map_count={{ vm_max_map_count }}
+
+- name: "reload sysctl"
+  ansible.builtin.command: "sysctl --system"
+  become: true
+
+- name: configure network
+  block:
+    - name: Create template Elasticsearch network
+      ansible.builtin.command: "podman network create {{ elk_network }}"
+      register: network_out
+
+    # /etc/cni/net.d/elk_network.conflist
+    - name: Set version of cni = 0.4.0
+      ansible.builtin.lineinfile:
+        path: "{{ network_out.stdout }}"
+        regexp: '"cniVersion": "1.0.0"'
+        line: |
+            "cniVersion": "0.4.0",
+        backrefs: true
+      when: network_out.stdout
+
+    - name: Create Elasticsearch network
+      ansible.builtin.command: "podman network create {{ elk_network }}"
+      register: network_out
   become_user: elasticsearch
   ignore_errors: true
-  register: network_out
+  when:
+    - elk_network != 'host'
 
 # /etc/cni/net.d/elk_network.conflist
-- name: Set version of cni = 0.4.0
-  ansible.builtin.lineinfile:
-    path: "{{ network_out.stdout }}"
-    regexp: '"cniVersion": "1.0.0"'
-    line: |
-        "cniVersion": "0.4.0",
-    backrefs: true
-  when: network_out.stdout
-  become_user: elasticsearch
-
-- name: Create Elasticsearch network
-  ansible.builtin.command: "podman network create {{ elk_network }}"
-  ignore_errors: true
-  register: network_out
-
-# /etc/cni/net.d/elk_network.conflist
-- name: Set version of cni = 0.4.0
-  ansible.builtin.lineinfile:
-    path: "{{ network_out.stdout }}"
-    regexp: '"cniVersion": "1.0.0"'
-    line: |
-        "cniVersion": "0.4.0",
-    backrefs: true
-  when: network_out.stdout
+# - name: Set version of cni = 0.4.0
+#   ansible.builtin.lineinfile:
+#     path: "{{ network_out.stdout }}"
+#     regexp: '"cniVersion": "1.0.0"'
+#     line: |
+#         "cniVersion": "0.4.0",
+#     backrefs: true
+#   when: network_out.stdout
 
 - name: Login to private image repository
   ansible.builtin.command: "podman login -u {{ image_repo_login }} -p {{ image_repo_pass }} {{ image_repo }}"

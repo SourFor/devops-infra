@@ -6,9 +6,8 @@ ansible-playbook -i inventories/local-test -t prepare,configure_cluster -l local
 ## INSTALL KIBANA
 
 ```
-ansible-playbook -i inventories/local-test -t enroll_kibana -l local --vault-pass-file vault.pass playbooks/elk/elk.yml 
-# TO DO 
-sudo podman exec kibana bin/kibana-verification-code
+ansible-playbook -i inventories/local-test -t kibana -l local --vault-pass-file vault.pass playbooks/elk/elk.yml 
+
 ```
 
 ## INSTALL FILEBEAT

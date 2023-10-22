@@ -3,7 +3,15 @@
   tags: prepare
 - include: configure_cluster.yml
   tags: configure_cluster
-- include: enroll_kibana.yml
-  tags: enroll_kibana
 - include: set_password.yml
-- include: configure_kibana.yml
+  tags:
+    - password
+- include: enroll_kibana.yml
+  tags:
+    - kibana
+- include: filebeat_install.yml
+  tags: 
+    - filebeat
+- include: elasticsearch_delete.yml
+  when: elastic_flush or flush_all
+  tags: flush

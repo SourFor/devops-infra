@@ -1,7 +1,26 @@
 cluster.name: "{{ elasticsearch_cluster_name }}"
 node.name: "{{ inventory_hostname }}"
 network.host: 0.0.0.0
-xpack.security.enabled: false
-# xpack.security.enrollment.enabled: true
-# discovery.seed_hosts: "{{ groups[elasticsearch_cluster_name | regex_replace('-','_')] | map('extract', hostvars, ['ansible_host']) | join(',') }}"
-cluster.initial_master_nodes: "{{ groups[elasticsearch_cluster_name | regex_replace('-','_')][0] }}"
+# Enable security features
+xpack.security.enabled: true
+
+xpack.security.enrollment.enabled: false
+
+# Enable encryption for HTTP API client connections, such as Kibana, Logstash, and Agents
+# xpack.security.http.ssl:
+#   enabled: true
+#   keystore.path: certs/http.p12
+
+# Enable encryption and mutual authentication between cluster nodes
+xpack.security.transport.ssl:
+  enabled: true
+  verification_mode: certificate
+  keystore.path: certs/elk-transport.p12
+  truststore.path: certs/elk-transport.p12
+  keystore.password: "techcert"
+  truststore.password: "techcert"
+  keystore.key_password: "techcert"
+
+discovery.seed_hosts: []
+# discovery.seed_hosts: "{{ groups[elasticsearch_cluster_name | regex_replace('-','_')] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
+# cluster.initial_master_nodes: "{{ groups[elasticsearch_cluster_name | regex_replace('-','_')][0] }}"

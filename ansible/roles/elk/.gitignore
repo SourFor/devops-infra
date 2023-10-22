@@ -1,0 +1,11 @@
+*/inventories/**/group_vars/
+*/inventories/**/host_vars/
+*/inventories/**/hosts
+public_keys/**
+critical_vault
+*.pass
+Docker
+experiment*
+script*
+python
+files/elasticsearch/configs/certs/*

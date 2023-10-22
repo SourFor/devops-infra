@@ -23,41 +23,74 @@
     - users
     - users_roles
 
-# podman run -d -ti --name elasticsearch-mchd-cluster --network elk_network -p 9200:9200 -p 9300:9300 -v /var/lib/elasticsearch/data:/usr/share/elasticsearch/data -v /var/lib/elasticsearch/config:/usr/share/elasticsearch/configs docker.io/elastic/elasticsearch:8.9.1
-# podman run -d -ti --name elasticsearch-mchd-cluster --network elk_network -p 9200:9200 -p 9300:9300 -v /var/lib/elasticsearch/data:/usr/share/elasticsearch/data:Z -v /var/lib/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml docker.io/elastic/elasticsearch:8.9.1
+- name: "Copy certs {{ item }}"
+  ansible.builtin.copy:
+    src: "files/elasticsearch/configs/certs/{{ item }}"
+    dest: "{{ elasticsearch_config_dir }}/certs/{{ item }}"
+    owner: root
+    group: root
+    mode: '0660'
+  loop:
+    - elk-cluster-ca.p12
+    - elk-transport.p12
+
+# Create first start for configure single-nide cluster
 - name: Create template Elasticsearch containers
   command: >
-    podman create -ti --name elasticsearch-{{ elasticsearch_cluster_name }} --network {{ elk_network }} -p {{ elasticsearch_client_port }}:9200 -p {{ elasticsearch_node_port }}:9300 
-    -v {{ elasticsearch_data_dir }}:/usr/share/elasticsearch/data:Z 
-    -v {{ elasticsearch_config_dir }}/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro 
+    podman run -ti -d --name elasticsearch-{{ elasticsearch_cluster_name }}
+    -u elasticsearch --replace -e "ES_JAVA_OPTS=-Xms{{es_heap_size}} -Xmx{{es_heap_size}}"
+    --network {{ elk_network }} -p {{ elasticsearch_client_port }}:9200 -p {{ elasticsearch_node_port }}:9300 
+    -v {{ elasticsearch_data_dir }}:/usr/share/elasticsearch/data:Z
+    -v {{ elasticsearch_config_dir }}:/usr/share/elasticsearch/config:Z
     {{ elasticsearch_image }}
+    bin/elasticsearch 
+    -Ediscovery.type=single-node
   become: true
-  become_user: elasticsearch
+  # become_user: elasticsearch
   
-- name: Generate the systemd unit file
-  ansible.builtin.command: podman generate systemd --new --files --name elasticsearch-{{ elasticsearch_cluster_name }}
+# - name: Generate the systemd unit file
+#   ansible.builtin.command: podman generate systemd --new --files --name elasticsearch-{{ elasticsearch_cluster_name }}
+#   ignore_errors: true
+#   args:
+#     chdir: /home/elasticsearch
+#   become: true
+#   become_user: elasticsearch
+
+
+- name: Wait for Elasticsearch to start
+  uri:
+    url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:9200"
+    return_content: yes
+    status_code: [401]
+    validate_certs: no
+  register: elasticsearch_response
+  until: elasticsearch_response.status == 401
+  retries: 6
+  delay: 10
   ignore_errors: true
-  args:
-    chdir: /home/elasticsearch
-  become: true
-  become_user: elasticsearch
+
+- name: Include task list from set_password.yml
+  ansible.builtin.import_tasks:
+    file: set_password.yml
 
 - name: Delete template Elasticsearch containers
   ansible.builtin.command: podman rm -f elasticsearch-{{ elasticsearch_cluster_name }}
   ignore_errors: true
   become: true
-  become_user: elasticsearch
+  # become_user: elasticsearch
 
 - name: Delete template Elasticsearch network
   ansible.builtin.command: "podman network rm {{ elk_network }}"
   ignore_errors: true
   become_user: elasticsearch
+  when: elk_network != 'host'
 
-# - name: Configure Elasticsearch systemd service
-#   template:
-#     src: elasticsearch.service.j2
-#     dest: "/usr/lib/systemd/system/elasticsearch-{{ elasticsearch_cluster_name }}.service"
-#   notify: Just force systemd to reread configs
+- name: Configure Elasticsearch systemd service
+  template:
+    src: elasticsearch.service.j2
+    dest: "/usr/lib/systemd/system/elasticsearch-{{ elasticsearch_cluster_name }}.service"
+  notify: Just force systemd to reread configs
+
 
 - name: Configure Elasticsearch systemd service
   copy:
@@ -75,7 +108,7 @@
 - name: Start and enable Elasticsearch systemd service
   systemd:
     name: elasticsearch-{{ elasticsearch_cluster_name }}.service
-    state: started
+    state: restarted
     enabled: yes
 
 # - name: Enable firewall rules for Elasticsearch ports
@@ -94,11 +127,16 @@
 
 - name: Wait for Elasticsearch to start
   uri:
-    url: http://localhost:9200
+    url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:9200"
     return_content: yes
+    status_code: [200]
+    validate_certs: no
+    force_basic_auth: yes
+    user: "{{ elasticsearch_user }}"
+    password: "{{ elasticsearch_password }}"
   register: elasticsearch_response
   until: elasticsearch_response.status == 200
-  retries: 10
+  retries: 6
   delay: 10
 
 # - name: Copy Elasticsearch index template

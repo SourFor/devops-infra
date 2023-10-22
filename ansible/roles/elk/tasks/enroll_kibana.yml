@@ -24,3 +24,17 @@
 
 - name: Start Kibana container
   ansible.builtin.command: podman run -d -ti --name kibana --network {{ elk_network }} -p {{ kibana_port }}:5601 -v /etc/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml {{ kibana_image }}
+
+
+- name: Wait for Kibana to restart
+  uri:
+    url: http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5601
+    method: GET
+    status_code: 200
+    timeout: 5
+    return_content: yes
+  register: kibana_response
+  until: kibana_response.status == 200
+  retries: 10
+  delay: 10
+  become: true
