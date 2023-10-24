@@ -50,31 +50,50 @@
       - /etc/filebeat/modules.d
 
   - name: "copy file filebeat.yml to /etc/filebeat/" 
-    copy:
-      src: "filebeat/filebeat.yml"
+    template:
+      src: "filebeat/filebeat.minimal.yml.j2"
       dest: "/etc/filebeat/filebeat.yml" 
       mode: 0640 
     tags:
       - config
 
-  - name: copy file pg_fields.yml to /etc/filebeat/ 
-    copy:
-      src: "filebeat/pg_fields.yml"
-      dest: "/etc/filebeat/pg_fields.yml" 
-      mode: 0640 
-    tags:
-      - config
+  # - name: copy file pg_fields.yml to /etc/filebeat/ 
+  #   copy:
+  #     src: "filebeat/pg_fields.yml"
+  #     dest: "/etc/filebeat/pg_fields.yml" 
+  #     mode: 0640 
+  #   tags:
+  #     - config
 
-  - name: "copy file postgresql.yml to /etc/filebeat/modules.d/" 
-    file:
-      path: "/etc/filebeat/modules.d/postgresql.yml.disabled"
-      state: absent
+  - name: configure postgresql module
+    block:
+    # - name: "rm file postgresql.yml.disabled from /etc/filebeat/modules.d/" 
+    #   file:
+    #     path: "/etc/filebeat/modules.d/postgresql.yml.disabled"
+    #     state: absent
 
-  - name: "copy file postgresql.yml to /etc/filebeat/modules.d/" 
-    copy:
-      src: "filebeat/postgresql.yml"
-      dest: "/etc/filebeat/modules.d/postgresql.yml"
-      mode: 0640 
+    - name: "copy file postgresql.yml to /etc/filebeat/modules.d/" 
+      template:
+        src: "filebeat/postgresql.yml.j2"
+        dest: "/etc/filebeat/modules.d/postgresql.yml"
+        mode: 0640 
+    when: filebeat_postgresql
+
+  - name: configure system module
+    block:
+  #   - name: "rm file system.yml.disabled from /etc/filebeat/modules.d/" 
+  #     file:
+  #       path: "/etc/filebeat/modules.d/system.yml.disabled"
+  #       state: absent
+
+    - name: "copy file system.yml to /etc/filebeat/modules.d/" 
+      template:
+        src: "filebeat/system.yml.j2"
+        dest: "/etc/filebeat/modules.d/system.yml"
+        mode: 0640 
+    when: filebeat_system
+
+
 
   # - name: "Configure Filebeat to start automatically during boot" 
   #   shell: 'update-rc.d filebeat defaults 95 10'
@@ -99,9 +118,8 @@
       --name=filebeat \
       --network {{ elk_network }} \ 
       --volume="/etc/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
-      --volume="/etc/filebeat/pg_fields.yml:/usr/share/filebeat/pg_fields.yml:ro" \
-      --volume="/etc/filebeat/modules.d/postgresql.yml:/usr/share/filebeat/modules.d/postgresql.yml:ro" \
-      --volume="/var/log/postgresql:/var/log/postgresql:ro" \
+      --volume="/etc/filebeat/modules.d:/usr/share/filebeat/modules.d:ro" \
+      --volume="/var/log:/var/log:ro" \
       {{ filebeat_image }}
 
   when: filebeat

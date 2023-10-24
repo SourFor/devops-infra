@@ -2,6 +2,7 @@
 # Define default variables file for elk
 sysctl_file: "99-custom.conf"
 vm_max_map_count: 262144
+elk_http_protocol: "http"
 elk_network: "host"
 elasticsearch_cluster_name: "test-cluster" # use group name from your inventory 
 elasticsearch_client_port: 9200
@@ -11,7 +12,7 @@ elasticsearch_config_dir: "/var/lib/elasticsearch/config"
 elasticsearch_user: "" # save it in the vault file (built-in elastic user - elastic)
 elasticsearch_password: "" # save it in the vault file
 elastic_flush: false
-es_heap_size: 4g
+es_heap_size: 2g
 image_repo: "docker.io"
 image_repo_login: "" # save it in the vault file
 image_repo_pass: "" # save it in the vault file
@@ -22,6 +23,7 @@ elasticsearch_truststore_password: "" # save it in the vault file
 elasticsearch_keystore_key_password: "" # save it in the vault file
 kibana_version: "8.9.2"
 kibana_image: "{{ image_repo }}/elastic/kibana:{{ kibana_version }}"
+kibana_cluster_name: "test-cluster" # use group name from your inventory 
 kibana_port: 5601
 kibana_data_dir: "/var/lib/elasticsearch/data"
 kibana_config_dir: "/var/lib/elasticsearch/config"
@@ -32,4 +34,7 @@ filebeat_image: "{{ image_repo }}/elastic/filebeat:{{ filebeat_version }}"
 filebeat_data_dir: "/var/lib/elasticsearch/data"
 filebeat_config_dir: "/var/lib/elasticsearch/config"
 filebeat: false
+filebeat_postgresql: false
+filebeat_tomcat: false
+filebeat_syslog: false
 flush_all: false

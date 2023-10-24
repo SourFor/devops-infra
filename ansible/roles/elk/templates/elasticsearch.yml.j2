@@ -17,9 +17,9 @@ xpack.security.transport.ssl:
   verification_mode: certificate
   keystore.path: certs/elk-transport.p12
   truststore.path: certs/elk-transport.p12
-  keystore.password: "techcert"
-  truststore.password: "techcert"
-  keystore.key_password: "techcert"
+  keystore.password: "{{ elasticsearch_keystore_password }}"
+  truststore.password: "{{ elasticsearch_truststore_password }}"
+  keystore.key_password: "{{ elasticsearch_keystore_key_password }}"
 
 discovery.seed_hosts: []
 # discovery.seed_hosts: "{{ groups[elasticsearch_cluster_name | regex_replace('-','_')] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"

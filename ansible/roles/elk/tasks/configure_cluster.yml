@@ -59,7 +59,7 @@
 
 - name: Wait for Elasticsearch to start
   uri:
-    url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:9200"
+    url: "{{ elk_http_protocol }}://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_client_port }}"
     return_content: yes
     status_code: [401]
     validate_certs: no
@@ -92,13 +92,13 @@
   notify: Just force systemd to reread configs
 
 
-- name: Configure Elasticsearch systemd service
-  copy:
-    src: "/home/elasticsearch/container-elasticsearch-{{ elasticsearch_cluster_name }}.service"
-    dest: "/usr/lib/systemd/system/elasticsearch-{{ elasticsearch_cluster_name }}.service"
-    remote_src: true
-    owner: elasticsearch
-    group: elasticsearch
+# - name: Configure Elasticsearch systemd service
+#   copy:
+#     src: "/home/elasticsearch/container-elasticsearch-{{ elasticsearch_cluster_name }}.service"
+#     dest: "/usr/lib/systemd/system/elasticsearch-{{ elasticsearch_cluster_name }}.service"
+#     remote_src: true
+#     owner: elasticsearch
+#     group: elasticsearch
 
 
 - name: Just force systemd to reread configs
@@ -127,7 +127,7 @@
 
 - name: Wait for Elasticsearch to start
   uri:
-    url: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:9200"
+    url: "{{ elk_http_protocol }}://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_client_port }}"
     return_content: yes
     status_code: [200]
     validate_certs: no

@@ -1,0 +1,22 @@
+filebeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+processors:
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+
+output.elasticsearch:
+  hosts: ["{{ [elk_http_protocol + '://'] | product(groups[elasticsearch_cluster_name | regex_replace('-','_')] | map('extract', hostvars, ['ansible_hostname']) | product([elasticsearch_client_port]) | map('join', ':')) | map('join') | join(',') }}"]
+  username: "{{ elasticsearch_user }}"
+  password: "{{ elasticsearch_password }}"
+
+setup.kibana:
+  host: "{{ groups[elasticsearch_cluster_name | regex_replace('-','_')] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
+  port: "{{ kibana_port }}"
+  protocol: "{{ elk_http_protocol }}"
+  username: "{{ elasticsearch_user }}"
+  password: "{{ elasticsearch_password }}"
+
+setup.dashboards.enabled: true
