@@ -31,10 +31,11 @@
     dest: "/usr/lib/systemd/system/kibana.service"
   notify: Just force systemd to reread configs
 
-- name: Restart filebeat
+- name: Restart kibana
   ansible.builtin.systemd:
     name: "kibana.service"
     state: restarted
+    enabled: yes
   become: true
 
 - name: Wait for Kibana to restart
