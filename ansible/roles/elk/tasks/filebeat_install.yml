@@ -93,7 +93,33 @@
         mode: 0640 
     when: filebeat_system
 
+  - name: configure tomcat module
+    block:
+  #   - name: "rm file tomcat.yml.disabled from /etc/filebeat/modules.d/" 
+  #     file:
+  #       path: "/etc/filebeat/modules.d/tomcat.yml.disabled"
+  #       state: absent
 
+    - name: "copy file tomcat.yml to /etc/filebeat/modules.d/" 
+      template:
+        src: "filebeat/tomcat.yml.j2"
+        dest: "/etc/filebeat/modules.d/tomcat.yml"
+        mode: 0640 
+    when: filebeat_tomcat
+
+  - name: configure zookeeper module
+    block:
+  #   - name: "rm file zookeeper.yml.disabled from /etc/filebeat/modules.d/" 
+  #     file:
+  #       path: "/etc/filebeat/modules.d/zookeeper.yml.disabled"
+  #       state: absent
+
+    - name: "copy file zookeeper.yml to /etc/filebeat/modules.d/" 
+      template:
+        src: "filebeat/zookeeper.yml.j2"
+        dest: "/etc/filebeat/modules.d/zookeeper.yml"
+        mode: 0640 
+    when: filebeat_zookeeper
 
   # - name: "Configure Filebeat to start automatically during boot" 
   #   shell: 'update-rc.d filebeat defaults 95 10'
@@ -106,20 +132,33 @@
   #     state: restarted 
   #   tags:
   #     - config
-  - name: Stop filebeat container
-    ansible.builtin.command: podman rm -f filebeat
-    ignore_errors: true
 
-  - name: Start filebeat container
-    ansible.builtin.command: podman run -d -ti \
-      --privileged \
-      -u root \
-      --hostname {{ ansible_hostname }} \
-      --name=filebeat \
-      --network {{ elk_network }} \ 
-      --volume="/etc/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
-      --volume="/etc/filebeat/modules.d:/usr/share/filebeat/modules.d:ro" \
-      --volume="/var/log:/var/log:ro" \
-      {{ filebeat_image }}
+  # - name: Stop filebeat container
+  #   ansible.builtin.command: podman rm -f filebeat
+  #   ignore_errors: true
+
+  # - name: Start filebeat container
+  #   ansible.builtin.command: podman run -d -ti \
+  #     --privileged \
+  #     -u root \
+  #     --hostname {{ ansible_hostname }} \
+  #     --name=filebeat \
+  #     --network {{ elk_network }} \ 
+  #     --volume="/etc/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
+  #     --volume="/etc/filebeat/modules.d:/usr/share/filebeat/modules.d:ro" \
+  #     --volume="/var/log:/var/log:ro" \
+  #     {{ filebeat_image }}
+
+  - name: Configure filebeat systemd service
+    template:
+      src: filebeat/filebeat.service.j2
+      dest: "/usr/lib/systemd/system/filebeat.service"
+    notify: Just force systemd to reread configs
+
+  - name: Restart filebeat
+    ansible.builtin.systemd:
+      name: "filebeat.service"
+      state: restarted
+    become: true
 
   when: filebeat

@@ -1,5 +1,10 @@
 ---
 # Define default variables file for elk
+image_repo: "docker.io"
+image_repo_login: "" # save it in the vault file
+image_repo_pass: "" # save it in the vault file
+flush_all: false
+# Elasticsearch
 sysctl_file: "99-custom.conf"
 vm_max_map_count: 262144
 elk_http_protocol: "http"
@@ -11,16 +16,14 @@ elasticsearch_data_dir: "/var/lib/elasticsearch/data"
 elasticsearch_config_dir: "/var/lib/elasticsearch/config"
 elasticsearch_user: "" # save it in the vault file (built-in elastic user - elastic)
 elasticsearch_password: "" # save it in the vault file
-elastic_flush: false
 es_heap_size: 2g
-image_repo: "docker.io"
-image_repo_login: "" # save it in the vault file
-image_repo_pass: "" # save it in the vault file
 elasticsearch_version: "8.9.2"
 elasticsearch_image: "{{ image_repo }}/elastic/elasticsearch:{{ elasticsearch_version }}"
 elasticsearch_keystore_password: "" # save it in the vault file
 elasticsearch_truststore_password: "" # save it in the vault file
 elasticsearch_keystore_key_password: "" # save it in the vault file
+elastic_flush: false
+# Kibana
 kibana_version: "8.9.2"
 kibana_image: "{{ image_repo }}/elastic/kibana:{{ kibana_version }}"
 kibana_cluster_name: "test-cluster" # use group name from your inventory 
@@ -29,6 +32,7 @@ kibana_data_dir: "/var/lib/elasticsearch/data"
 kibana_config_dir: "/var/lib/elasticsearch/config"
 kibana_user: "" # save it in the vault file (built-in kibana user - kibana_system)
 kibana_password: "" # save it in the vault file
+# Filebeat
 filebeat_version: "8.9.2"
 filebeat_image: "{{ image_repo }}/elastic/filebeat:{{ filebeat_version }}"
 filebeat_data_dir: "/var/lib/elasticsearch/data"
@@ -37,4 +41,4 @@ filebeat: false
 filebeat_postgresql: false
 filebeat_tomcat: false
 filebeat_syslog: false
-flush_all: false
+filebeat_zookeeper: false
