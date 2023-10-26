@@ -40,5 +40,5 @@ filebeat_config_dir: "/var/lib/elasticsearch/config"
 filebeat: false
 filebeat_postgresql: false
 filebeat_tomcat: false
-filebeat_syslog: false
+filebeat_system: false
 filebeat_zookeeper: false
