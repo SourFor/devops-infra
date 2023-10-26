@@ -4,6 +4,7 @@
 
 # Default Kibana configuration for docker target
 server.host: "0.0.0.0"
+server.port: "{{ kibana_port }}"
 server.publicBaseUrl: "{{ elk_http_protocol }}://{{ ansible_hostname }}:{{ kibana_port }}"
 server.shutdownTimeout: "5s"
 elasticsearch.hosts: ["{{ [elk_http_protocol + '://'] | product(groups[elasticsearch_cluster_name | regex_replace('-','_')] | map('extract', hostvars, ['ansible_hostname']) | product([elasticsearch_client_port]) | map('join', ':')) | map('join') | join(',') }}"]

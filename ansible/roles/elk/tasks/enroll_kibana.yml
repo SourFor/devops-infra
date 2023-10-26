@@ -25,7 +25,7 @@
 # - name: Start Kibana container
 #   ansible.builtin.command: podman run -d -ti --name kibana --network {{ elk_network }} -p {{ kibana_port }}:5601 -v /etc/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml {{ kibana_image }}
 
-- name: Configure filebeat systemd service
+- name: Configure kibana systemd service
   template:
     src: kibana.service.j2
     dest: "/usr/lib/systemd/system/kibana.service"
