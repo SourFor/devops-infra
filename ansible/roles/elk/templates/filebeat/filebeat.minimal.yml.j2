@@ -13,7 +13,7 @@ output.elasticsearch:
   password: "{{ elasticsearch_password }}"
 
 setup.kibana:
-  host: "{{ groups[elasticsearch_cluster_name | regex_replace('-','_')] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
+  host: "{{ groups[kibana_cluster_name | regex_replace('-','_')][0] | map('extract', hostvars, ['ansible_hostname']) | product([elasticsearch_client_port]) | map('join', ':')) | map('join') }}"
   port: "{{ kibana_port }}"
   protocol: "{{ elk_http_protocol }}"
   username: "{{ elasticsearch_user }}"
