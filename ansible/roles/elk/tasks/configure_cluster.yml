@@ -25,14 +25,14 @@
 
 - name: "Copy certs {{ item }}"
   ansible.builtin.copy:
-    src: "files/elasticsearch/configs/certs/{{ item }}"
+    src: "{{ elasticsearch_certs_path }}/{{ item }}"
     dest: "{{ elasticsearch_config_dir }}/certs/{{ item }}"
     owner: root
     group: root
     mode: '0660'
   loop:
-    - elk-cluster-ca.p12
-    - elk-transport.p12
+    - "{{ elasticsearch_ca_cert_name }}"
+    - "{{ elasticsearch_transport_cert_name }}"
 
 # Create first start for configure single-nide cluster
 - name: Create template Elasticsearch containers

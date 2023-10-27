@@ -19,6 +19,10 @@ elasticsearch_password: "" # save it in the vault file
 es_heap_size: 2g
 elasticsearch_version: "8.9.2"
 elasticsearch_image: "{{ image_repo }}/elastic/elasticsearch:{{ elasticsearch_version }}"
+elasticsearch_certs_path: "files/elasticsearch/configs/certs"
+elasticsearch_ca_cert_name: "elk-cluster-ca.p12"
+elasticsearch_transport_cert_name: "elk-transport.p12"
+elasticsearch_http_cert_name: ""
 elasticsearch_keystore_password: "" # save it in the vault file
 elasticsearch_truststore_password: "" # save it in the vault file
 elasticsearch_keystore_key_password: "" # save it in the vault file
