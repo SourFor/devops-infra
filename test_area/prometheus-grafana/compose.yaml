@@ -1,0 +1,70 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+    # ports:
+    #   - 9090:9090
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    network_mode: host
+    # ports:
+    #   - 9093:9093
+    volumes:
+      - ./alertmanager/:/etc/alertmanager/
+    restart: always
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    deploy:
+      mode: global
+
+  node-exporter1:
+    image: prom/node-exporter
+    container_name: node-exporter1
+    user: root
+    privileged: true
+    ports:
+      - 9100:9100
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.systemd'
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+      - /run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+  node-exporter2:
+    image: prom/node-exporter
+    container_name: node-exporter2
+    user: root
+    privileged: true
+    ports:
+      - 9101:9100
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.systemd'
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+      - /run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+volumes:
+  prom_data:
