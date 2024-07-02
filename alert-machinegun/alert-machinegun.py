@@ -1,38 +1,39 @@
 import argparse
+import json
 import requests
 import yaml
+from datetime import datetime, timezone 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("secret_path", help="Path to the file with login and password")
+parser.add_argument("-c", "--config", help="Path to the file with login and password")
 args = parser.parse_args()
 
-with open(args.secret_path, "r") as file:
+with open(args.config, "r") as file:
  data = yaml.safe_load(file)
 
 login = data["login"]
 password = data["password"]
+server = data["server"] + '/api/v2/alerts'
+
+local_time = datetime.now(timezone.utc).astimezone()
+local_time.isoformat()
 
 headers = {
  "Content-Type": "application/json"
 }
 
-data = {
- "labels": {
- "alertname": "Scheduled alert"
- },
- "annotations": {
- "info": "This alert was sent by the verification tool"
- },
- "startsAt": "2024-06-03T20:07:50",
- "endsAt": "2024-06-03T20:12:50",
- "generatorURL": "localhost:80"
+alert = {
+    "labels": {
+        "alertname": "Scheduled alert"
+    },
+    "annotations": {
+        "info": "This alert was sent by the verification tool"
+    },
+    "startsAt": local_time.isoformat(),
+    "generatorURL": "localhost:80"
 }
-
-response = requests.post("www.example.org", data=json.dumps(data), headers=headers, auth=(login, password))
-
+data = []
+data.append(alert)
+print(json.dumps(data))
+response = requests.post(server, data=json.dumps(data), headers=headers, auth=(login, password))
 print(response.status_code)
-
-
-from datetime import datetime, timezone                                
-local_time = datetime.now(timezone.utc).astimezone()
-local_time.isoformat()
