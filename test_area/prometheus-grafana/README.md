@@ -10,3 +10,16 @@ Stop and remove the containers. Use `-v` to remove the volumes if looking to era
 ```
 $ docker compose down -v
 ```
+
+
+## Run listener
+
+'''
+sudo nc -lk -p 777
+'''
+
+## Run script
+
+'''
+python3 alert-machinegun.py -c confg.yml
+'''
