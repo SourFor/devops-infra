@@ -19,6 +19,7 @@ services:
     ports:
       - 3000:3000
     restart: unless-stopped
+    network_mode: host
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=grafana
@@ -35,6 +36,7 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
+      - '--web.config.file=/etc/alertmanager/web.yml'
     deploy:
       mode: global
 

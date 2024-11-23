@@ -21,5 +21,8 @@ sudo nc -lk -p 777
 ## Run script
 
 '''
-python3 alert-machinegun.py -c confg.yml
+python3 alert-machinegun.py -c config.yml
 '''
+
+## Jenkins
+

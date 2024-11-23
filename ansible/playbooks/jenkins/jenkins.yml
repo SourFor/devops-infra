@@ -1,0 +1,11 @@
+---
+- name: Jenkins install
+  hosts: all
+  become: yes
+  # tasks:
+  # - name: 'check if cert-create and cert-vault are used together' 
+  #   fail: msg="Please use cert-create or cert-vault"
+  #   when: 
+  #   - "cert-create is defined and cert-vault is defined"
+  roles:
+    - jenkins

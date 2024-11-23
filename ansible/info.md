@@ -15,3 +15,15 @@ ansible-playbook -i inventories/local-test -t kibana -l local --vault-pass-file 
 ```
 ansible-playbook -i inventories/local-test -l local --vault-pass-file vault.pass  playbooks/elk/filebeat.yml 
 ```
+
+## INSTALL ALERT-MACHINEGUN
+
+```
+ansible-playbook -i inventories/local-test -l local --vault-pass-file vault.pass  playbooks/prometheus/alert_machinegun.yml 
+```
+
+## INSTALL JENKINS
+
+```
+ansible-playbook -i inventories/local-test -l local --vault-pass-file vault.pass  playbooks/jenkins/jenkins.yml 
+```

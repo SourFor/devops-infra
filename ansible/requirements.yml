@@ -1,0 +1,11 @@
+roles:
+# alert_machinegun
+- name: alert_machinegun
+  src: git@github.com:SourFor/ansible-role-alert-machinegun.git
+  scm: git
+  version: main
+# alert_machinegun
+- name: jenkins
+  src: git+file:///home/sour/github.com/SourFor/ansible-role-jenkins
+  scm: git
+  version: master

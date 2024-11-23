@@ -1,0 +1,6 @@
+---
+- name: alert_machinegun install
+  hosts: all
+  become: yes
+  roles: 
+    - alert_machinegun
