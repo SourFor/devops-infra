@@ -3,8 +3,18 @@
 ### terminal №1
 
 ```sh
-sudo apt install postgresql-16 postgresql-16-client
+sudo apt install python3 postgresql-16 postgresql-16-client
 sudo systemctl stop postgresql
+```
+
+create data dirs
+
+```sh
+cd test_area/patroni
+mkdir -p data/etcd
+mkdir -p data/postgres/postgresql0
+mkdir data/postgres/postgresql1
+chmod 700 data/postgres/postgresql0 data/postgres/postgresql1
 ```
 
 ```sh
@@ -56,7 +66,7 @@ psql -U postgres -h 127.0.0.1 -p 5000
 SHOW PORT;
 ```
 
-stop leader postgresql or patrony ( press `ctrl+c` in terminal №1 or terminal №1 ) and check port number in the psql terminal again
+stop leader postgresql or patrony ( press `ctrl+c` in terminal №1 or terminal №2 ) and check port number in the psql terminal again
 
 ```sh
 SHOW PORT;
