@@ -1,7 +1,10 @@
 # Patroni
 
+### terminal №1
+
 ```sh
 sudo apt install postgresql-16 postgresql-16-client
+sudo systemctl stop postgresql
 ```
 
 ```sh
@@ -15,20 +18,56 @@ sudo tar xzvf  -C /usr/local/bin/ --strip-components=1
 /usr/local/bin/etcd --config-file etcd.conf.yml.sample
 ```
 
+### terminal №2
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
 patroni postgres0.yml
 ```
 
+### terminal №3
+
 ```sh
-python3 -m venv .venv
 source .venv/bin/activate
 patroni postgres1.yml
 ```
+
+## haproxy
+
+### terminal №4
+
+```sh
+sudo apt install haproxy
+sudo systemctl stop haproxy
+```
+
+```sh
+/usr/sbin/haproxy -f haproxy.cfg -p /run/haproxy-test.pid -S /run/haproxy-test.sock
+```
+
+## test
+
+### terminal №5
+
+```sh
+psql -U postgres -h 127.0.0.1 -p 5000
+\conninfo
+SHOW PORT;
+```
+
+stop leader postgresql or patrony ( press `ctrl+c` in terminal №1 or terminal №1 ) and check port number in the psql terminal again
+
+```sh
+SHOW PORT;
+```
+
+## etcd help
+
+```sh
+etcdctl --endpoints=127.0.0.1:3379  member list
+```
+
+## next steps
+
+- create systemd services
