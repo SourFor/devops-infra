@@ -9,3 +9,8 @@ experiment*
 script*
 python
 */roles
+test_area/patroni/data/etcd/*/*
+test_area/patroni/data/postgres/*/*
+test_area/patroni/data/postgres/*failed
+test_area/**/.venv
+test_area/patroni/data/postgres/.s.PGSQL.*
